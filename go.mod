@@ -1,0 +1,1 @@
+module "yt-link-truncator"
