@@ -1,1 +1,3 @@
-module "yt-link-truncator"
+module yt-link-truncator
+
+go 1.14
