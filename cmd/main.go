@@ -5,25 +5,48 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/url"
 	"os"
 	"regexp"
 	"strings"
 )
 
+type cliFlags struct {
+	sourceURL string
+}
+
 func main() {
 	// Goal: allow input from either stdin, a CLI flag, or via HTTP interface
 	// CLI flag+arg takes precedence over stdin
+	// TODO :: ^^ Consider swapping that priority? stdin first, CLI second?
 	// HTTP interface is started with a flag and will ignore stdin and CLI arg
 
 	// sourceUrl := "https://www.youtube.com/watch?v=YhxKbuO93ZI&t=3m&something=stuff"
 	// sourceUrl := "https://youtu.be/YhxKbuO93ZI?t=187"
 
-	//convertedURL, err := parseURL(sourceUrl)
-	//if err != nil {
-	//	os.Exit(1)
-	//}
-	//fmt.Println(convertedURL)
+	flags, err := parseCLIFlags()
+	if err != nil {
+		log.Fatal(err)
+	}
+	convertedURL, err := parseURL(flags.sourceURL)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	fmt.Println(convertedURL)
+}
+
+func parseCLIFlags() (*cliFlags, error){
+	flags := cliFlags{}
+
+	sourceURL, err := fetchSourceURL()
+	if err != nil || sourceURL == "" {
+		return nil, errors.New("FATAL: Unable to parse a source URL.")
+	} else {
+		flags.sourceURL = sourceURL
+	}
+
+	return &flags, nil
 }
 
 func fetchSourceURL() (string, error) {
@@ -70,6 +93,7 @@ func parseURL(sourceUrl string) (string, error) {
 			return "", errors.New("invalid Youtube URL")
 		}
 	} else if parsedURL.Host == "youtu.be" {
+		// TODO :: this needs to check for a watch?v= parameter
 		videoCode = parsedURL.EscapedPath()
 		videoCode = strings.Trim(videoCode, "/")
 	}
